@@ -19,12 +19,15 @@ async function main() {
   console.log("🪄 creating test app...");
   await exec("npx", ["tsx", "bin/cli.ts", "create", "testapp"], root);
 
+  // Link the local preact-kit package
+  await exec("npm", ["link"], root);
+
   // List all files in the test directory
   console.log("📂 listing files in test directory...");
   await exec("find", ["."], testDir);
 
   console.log("📦 installing deps...");
-  await exec("npm", ["install"], testDir);
+  await exec("npm", ["link", "preact-kit"], testDir);
 
   console.log("🚀 starting server...");
   const server = spawn("npx", ["tsx", "server.ts"], {

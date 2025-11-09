@@ -1,9 +1,10 @@
 import express from "express";
 import fs from "fs";
 import path from "path";
-import { renderToString } from "preact-render-to-string";
-import { h } from "preact";
+import { renderToStringAsync } from "preact-render-to-string"; import { h } from "preact";
 import { build } from "esbuild";
+
+/** @jsx h */
 
 /**
  * createApp()
@@ -18,12 +19,12 @@ export async function createApp() {
   const apiDir = path.join(cwd, "api");
   const publicDir = path.join(cwd, "public");
 
-  // 1️⃣ Serve static files (including the esbuild output)
+  // 1️⃣ Serve static files
   if (fs.existsSync(publicDir)) {
     app.use(express.static(publicDir));
   }
 
-  // 2️⃣ Start esbuild in watch mode for client bundle
+  // 2️⃣ Build client bundle
   const clientEntry = path.join(cwd, "src/index.tsx");
   const outFile = path.join(publicDir, "index.js");
 
@@ -37,12 +38,6 @@ export async function createApp() {
     jsxImportSource: "preact",
     target: "es2020",
     loader: { ".tsx": "tsx", ".ts": "ts" },
-    // watch: {
-    //   onRebuild(error, result) {
-    //     if (error) console.error("❌ esbuild error:", error);
-    //     else console.log("✅ client rebuilt:", new Date().toLocaleTimeString());
-    //   },
-    // },
   }).then(() => console.log("🧱 esbuild watching client bundle..."));
 
   // 3️⃣ Mount API routes
@@ -61,28 +56,26 @@ export async function createApp() {
 
   console.log("Mounting SSR routes...");
 
-
+  // 4️⃣ SSR routes
   for (const file of fs.readdirSync(routesDir)) {
     if (!/\.(t|j)sx?$/.test(file)) continue;
 
     const route = file === "index.tsx" ? "/" : "/" + file.replace(/\.(t|j)sx?$/, "");
     console.log(`🔗 ${route} -> ${path.join(routesDir, file)}`);
 
-    // import once, keep reference
     const mod = await import(path.join(routesDir, file));
     const Component = mod.default;
 
-    // create a fresh vnode per request
-    app.get(route, (req, res, next) => {
-      try {
-        const vnode = h(Component, {});          // create vnode now
-        const html = renderToString(vnode);      // render to string in context
-        res.send(htmlWrapper(html));             // send wrapped HTML
-      } catch (err) {
-        next(err);
-      }
+    app.get(route, async (req, res, next) => {
+      // try {
+      const html = await renderToStringAsync(<div><Component /></div>);
+      res.send(htmlWrapper(html));
+      // } catch (err) {
+      //   next(err);
+      // }
     });
   }
+
   return app;
 }
 
