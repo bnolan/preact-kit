@@ -61,48 +61,37 @@ export async function createApp() {
 
   console.log("Mounting SSR routes...");
 
-  // 4️⃣ Mount SSR routes
+
   for (const file of fs.readdirSync(routesDir)) {
-    if (!/\.(t|j)sx?$/.test(file)) {
-      continue;
-    }
+    if (!/\.(t|j)sx?$/.test(file)) continue;
 
-    const route =
-      file === "index.tsx" ? "/" : "/" + file.replace(/\.(t|j)sx?$/, "");
-
+    const route = file === "index.tsx" ? "/" : "/" + file.replace(/\.(t|j)sx?$/, "");
     console.log(`🔗 ${route} -> ${path.join(routesDir, file)}`);
 
-    app.get(route, async (req, res, next) => {
-      console.log("wtf?");
-      // try {
-      const mod = await import(
-        path.join(routesDir, file) + "?update=" + Date.now()
-      );
-      const Component = mod.default;
-      const html = renderPage(Component, {});
-      res.send(html);
-      // } catch (err) {
-      //   next(err);
-      // }
+    // import once, keep reference
+    const mod = await import(path.join(routesDir, file));
+    const Component = mod.default;
+
+    // create a fresh vnode per request
+    app.get(route, (req, res, next) => {
+      try {
+        const vnode = h(Component, {});          // create vnode now
+        const html = renderToString(vnode);      // render to string in context
+        res.send(htmlWrapper(html));             // send wrapped HTML
+      } catch (err) {
+        next(err);
+      }
     });
   }
-
   return app;
 }
 
-/**
- * renderPage()
- * ------------
- * Simple server-side rendering helper.
- */
-export function renderPage(Component: any, props: Record<string, any>) {
-  const body = renderToString(h(Component, props));
+function htmlWrapper(body: string) {
   return `<!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta charset="utf-8"/>
-    <title>Preact-Kit App</title>
-    <script>window.__props__=${JSON.stringify(props)};</script>
+    <meta charset="utf-8" />
+    <title>Preact-Kit</title>
   </head>
   <body>
     <div id="app">${body}</div>
