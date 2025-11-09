@@ -8,8 +8,11 @@ export default function Home() {
   useServer(async () => {
     const res = await fetch("/api/ping");
 
+    console.log('res', res)
+
     if (res.ok) {
       const data = await res.json();
+      console.log(data)
       setMessage(data.message);
     }
   }, []);

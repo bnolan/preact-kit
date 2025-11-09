@@ -12,10 +12,16 @@ const apiRoutes = new Map<string, any>();
 
 export var fetch = globalThis.fetch;
 
-export var useServer = (fn: Function, deps: any) => {
+export var useServer = async (fn: Function, deps: any) => {
+  console.log('hi2u')
+
   // server side: wrap fetch
   if (typeof process === "object") {
+    console.log('hey babe')
+
     fetch = async (url: string | any, opts?: any) => {
+      console.log('fetching', url)
+
       if (!url.startsWith("/api/")) {
         throw new Error(`Route ${url} is not an /api/ route`);
       }
@@ -37,12 +43,17 @@ export var useServer = (fn: Function, deps: any) => {
 
       await handler(mockReq, mockRes);
 
+      console.log('fetched', url)
+      console.log(mockRes, body)
+
       return {
         ok: true,
         json: async () => JSON.parse(body),
         text: async () => body,
       } as any;
     }
+
+    await fn()
   } else {
     useEffect(() => {
       fn();
@@ -87,34 +98,30 @@ export async function createApp() {
   }).then(() => console.log("🧱 esbuild watching client bundle..."));
 
   // 3️⃣ Mount API routes
+  console.log("Mounting API routes...");
+
   if (fs.existsSync(apiDir)) {
     for (const file of fs.readdirSync(apiDir)) {
-      if (!/\.(t|j)sx?$/.test(file)) continue;
+      if (!/\.(t|j)sx?$/.test(file)) {
+        continue;
+      }
+
       const route = "/" + file.replace(/\.(t|j)sx?$/, "");
       import(path.join(apiDir, file)).then((mod) => {
         const handler = mod.default || mod.handler;
         if (typeof handler === "function") {
+          console.log(`🔗 /api${route} -> ${path.join(apiDir, file)}`);
           app.use(`/api${route}`, handler);
+          apiRoutes.set(`/api${route}`, handler);
         }
       });
     }
   }
 
-  // Create map of routes
-  for (const layer of (app._router?.stack || [])) {
-    if (!layer.route) continue;
-    const path = layer.route.path;
-    const isApi = path.startsWith("/api/");
-    if (isApi) {
-      // assume single method handler
-      const handler = layer.route.stack[0].handle;
-      apiRoutes.set(path, handler);
-    }
-  }
-
-  console.log("Mounting SSR routes...");
 
   // 4️⃣ SSR routes
+  console.log("Mounting SSR routes...");
+
   for (const file of fs.readdirSync(routesDir)) {
     if (!/\.(t|j)sx?$/.test(file)) continue;
 
