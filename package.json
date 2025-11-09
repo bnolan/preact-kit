@@ -1,0 +1,30 @@
+{
+  "name": "preact-kit",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "preact-kit": "./dist/bin/cli.js"
+  },
+  "scripts": {
+    "test": "tsx test/test.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "pg-promise": "^12.2.0",
+    "preact": "^10.27.2",
+    "preact-render-to-string": "^6.6.3"
+  },
+  "devDependencies": {
+    "@types/ejs": "^3.1.5",
+    "@types/express": "^5.0.5",
+    "@types/node": "^24.10.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

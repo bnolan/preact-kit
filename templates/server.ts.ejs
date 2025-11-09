@@ -1,0 +1,8 @@
+// import { createApp } from "preact-kit";
+import { createApp } from "../src/index.ts"; // local dev path
+
+const app = await createApp();
+
+app.listen(process.env.PORT || 3000, () =>
+  console.log("🚀 Serving <%= appName %> on http://localhost:3000")
+);
