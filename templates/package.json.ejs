@@ -8,11 +8,10 @@
   },
   "scripts": {
     "dev": "tsx --watch server.ts",
-    "build:client": "node esbuild.config.mjs",
     "build": "tsc && npm run build:client",
     "start": "node dist/server.js"
   },
   "dependencies": {
-    "preact-kit": "*"
+    "preact-kit": "1.*"
   }
 }

@@ -43,7 +43,7 @@ async function main() {
 
   console.log("🌐 HTML:", html);
 
-  if (html.includes("Hello world!")) {
+  if (html.includes("Hello world!") && html.includes("Ping: pong")) {
     console.log("✅ success: SSR output looks good.");
   } else {
     console.error("❌ failure: expected 'Hello world!' in HTML.");

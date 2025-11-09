@@ -1,10 +1,55 @@
 import express from "express";
 import fs from "fs";
 import path from "path";
-import { renderToStringAsync } from "preact-render-to-string"; import { h } from "preact";
+import { renderToStringAsync } from "preact-render-to-string";
+import { h } from "preact";
 import { build } from "esbuild";
+import { useEffect } from "preact/hooks";
 
 /** @jsx h */
+
+const apiRoutes = new Map<string, any>();
+
+export var fetch = globalThis.fetch;
+
+export var useServer = (fn: Function, deps: any) => {
+  // server side: wrap fetch
+  if (typeof process === "object") {
+    fetch = async (url: string | any, opts?: any) => {
+      if (!url.startsWith("/api/")) {
+        throw new Error(`Route ${url} is not an /api/ route`);
+      }
+
+      const handler = apiRoutes.get(url);
+
+      if (!handler) {
+        throw new Error(`No route for ${url}`);
+      }
+
+      let body: any;
+      const mockReq = { method: opts?.method || "GET", url } as Request;
+
+      const mockRes = {
+        json(data: any) { body = JSON.stringify(data); return mockRes; },
+        send(data: any) { body = data; return mockRes; },
+        status() { return mockRes; },
+      }
+
+      await handler(mockReq, mockRes);
+
+      return {
+        ok: true,
+        json: async () => JSON.parse(body),
+        text: async () => body,
+      } as any;
+    }
+  } else {
+    useEffect(() => {
+      fn();
+    }, deps);
+  }
+}
+
 
 /**
  * createApp()
@@ -37,6 +82,7 @@ export async function createApp() {
     jsx: "automatic",
     jsxImportSource: "preact",
     target: "es2020",
+    external: ["preact-kit"],
     loader: { ".tsx": "tsx", ".ts": "ts" },
   }).then(() => console.log("🧱 esbuild watching client bundle..."));
 
@@ -51,6 +97,18 @@ export async function createApp() {
           app.use(`/api${route}`, handler);
         }
       });
+    }
+  }
+
+  // Create map of routes
+  for (const layer of (app._router?.stack || [])) {
+    if (!layer.route) continue;
+    const path = layer.route.path;
+    const isApi = path.startsWith("/api/");
+    if (isApi) {
+      // assume single method handler
+      const handler = layer.route.stack[0].handle;
+      apiRoutes.set(path, handler);
     }
   }
 
