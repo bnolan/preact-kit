@@ -8,6 +8,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, "..");
 const testDir = path.join(root, "testapp");
+// pick a random ephemeral port between 4000–4999
+const PORT = 4000 + Math.floor(Math.random() * 1000);
+
 
 async function main() {
   console.log("🧪 cleaning...");
@@ -27,13 +30,13 @@ async function main() {
   const server = spawn("npx", ["tsx", "server.ts"], {
     cwd: testDir,
     stdio: ["pipe", "pipe", "pipe"],
-    env: { ...process.env, PORT: "3000" },
+    env: { ...process.env, PORT },
   });
 
   await waitForOutput(server, "http://localhost:", 20000);
 
   console.log("🌐 fetching homepage...");
-  const html = await fetchOnce("http://localhost:3000/");
+  const html = await fetchOnce(`http://localhost:${PORT}/`);
 
   console.log("🌐 HTML:", html);
 
@@ -79,7 +82,7 @@ function waitForOutput(
       timeout
     );
     proc?.stdout?.on("data", (data) => {
-      console.log("> ", data.toString());
+      console.log("> ", data.toString().trim());
 
       const line = data.toString();
       if (line.includes(text)) {

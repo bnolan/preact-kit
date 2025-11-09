@@ -14,8 +14,8 @@ import { build } from "esbuild";
 export async function createApp() {
   const app = express();
   const cwd = process.cwd();
-  const routesDir = path.join(cwd, "src/routes");
-  const apiDir = path.join(cwd, "src/api");
+  const routesDir = path.join(cwd, "src");
+  const apiDir = path.join(cwd, "api");
   const publicDir = path.join(cwd, "public");
 
   // 1️⃣ Serve static files (including the esbuild output)
@@ -59,25 +59,32 @@ export async function createApp() {
     }
   }
 
+  console.log("Mounting SSR routes...");
+
   // 4️⃣ Mount SSR routes
-  if (fs.existsSync(routesDir)) {
-    for (const file of fs.readdirSync(routesDir)) {
-      if (!/\.(t|j)sx?$/.test(file)) continue;
-      const route =
-        file === "index.tsx" ? "/" : "/" + file.replace(/\.(t|j)sx?$/, "");
-      app.get(route, async (req, res, next) => {
-        try {
-          const mod = await import(
-            path.join(routesDir, file) + "?update=" + Date.now()
-          );
-          const Component = mod.default;
-          const html = renderPage(Component, {});
-          res.send(html);
-        } catch (err) {
-          next(err);
-        }
-      });
+  for (const file of fs.readdirSync(routesDir)) {
+    if (!/\.(t|j)sx?$/.test(file)) {
+      continue;
     }
+
+    const route =
+      file === "index.tsx" ? "/" : "/" + file.replace(/\.(t|j)sx?$/, "");
+
+    console.log(`🔗 ${route} -> ${path.join(routesDir, file)}`);
+
+    app.get(route, async (req, res, next) => {
+      console.log("wtf?");
+      // try {
+      const mod = await import(
+        path.join(routesDir, file) + "?update=" + Date.now()
+      );
+      const Component = mod.default;
+      const html = renderPage(Component, {});
+      res.send(html);
+      // } catch (err) {
+      //   next(err);
+      // }
+    });
   }
 
   return app;
