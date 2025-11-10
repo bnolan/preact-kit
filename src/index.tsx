@@ -10,10 +10,17 @@ import { Suspense, lazy } from 'preact/compat';
 /** @jsx h */
 
 const apiRoutes = new Map<string, any>();
+const inflight = new Map<string, Promise<any>>();
 const fetchCache = new Map<string, any>();
 
 export function useFetchState(url: string) {
+  console.log('useFetchState called with url:', url)
+
   if (typeof window === "undefined") {
+    if (inflight.has(url)) {
+      throw inflight.get(url);
+    }
+
     if (fetchCache.has(url)) {
       return useState(fetchCache.get(url));
     }
@@ -30,28 +37,35 @@ export function useFetchState(url: string) {
       throw new Error(`No route for ${url}`);
     }
 
-    let body: any;
-    const mockReq = { method: "GET", url } as Request;
-
-    const mockRes = {
-      json(data: any) { body = JSON.stringify(data); return mockRes; },
-      send(data: any) { body = data; return mockRes; },
-      status() { return mockRes; },
-    }
 
     console.log('throwing...')
     const f = async function () {
+      // let body: any;
+      // const mockReq = { method: "GET", url } as Request;
+
+      // const mockRes = {
+      //   json(data: any) { body = JSON.stringify(data); return mockRes; },
+      //   send(data: any) { body = data; return mockRes; },
+      //   status() { return mockRes; },
+      // }
+
       // await handler(mockReq, mockRes)
-      console.log('hi2u')
+      console.log('querying..')
 
-      const value = JSON.stringify({ message: 'pong' })
+      await new Promise(resolve => setTimeout(resolve, 5)); // force async
+      const value = 'pong';
 
-      return [value, () => { }] as const;
+      console.log('..got response')
+
+      inflight.delete(url)
+      fetchCache.set(url, value)
+
+      return useState(value)
     }
 
     const promise = f()
-    fetchCache.set(url, promise)
-    throw promise
+    inflight.set(url, promise)
+    throw promise;
   }
 
   const response = useState("");
