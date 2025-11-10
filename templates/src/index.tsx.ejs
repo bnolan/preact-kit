@@ -4,9 +4,26 @@ import { useFetchState } from "preact-kit/hooks";
 
 export default function Home() {
   const [message, setMessage] = useFetchState("/api/ping")
+  const [query, setQuery] = useState('')
+
+  function onSubmit(e: Event) {
+    e.preventDefault();
+    alert(`You searched for: ${query}`);
+  }
 
   return (
     <div>
+
+      <form onSubmit={onSubmit}>
+        <input
+          type="text"
+          value={query}
+          onInput={(e: any) => setQuery(e.target.value)}
+          placeholder="Search..."
+        />
+        <button type="submit">Search</button>
+      </form>
+
       <h1>Hello world!</h1>
       <p>Welcome to <%= appName %> — powered by Preact-Kit.</p>
       <p>Ping: {message}</p>

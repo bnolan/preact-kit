@@ -69,6 +69,9 @@ export async function createApp() {
     preserveSymlinks: true,
     alias: {
       preact: path.resolve(process.cwd(), "node_modules/preact"),
+      "preact/hooks": path.resolve(process.cwd(), "node_modules/preact/hooks"),
+      "preact/jsx-runtime": path.resolve(process.cwd(), "node_modules/preact/jsx-runtime"),
+
     },
 
 
