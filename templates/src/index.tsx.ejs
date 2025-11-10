@@ -1,21 +1,9 @@
 import { h } from "preact";
 import { useState, useEffect } from "preact/hooks";
-import { useServer, fetch } from "preact-kit";
+import { useFetchState } from "preact-kit";
 
 export default function Home() {
-  const [message, setMessage] = useState("");
-
-  useServer(async () => {
-    const res = await fetch("/api/ping");
-
-    console.log('res', res)
-
-    if (res.ok) {
-      const data = await res.json();
-      console.log(data)
-      setMessage(data.message);
-    }
-  }, []);
+  const [message, setMessage] = useFetchState("/api/ping")
 
   return (
     <div>

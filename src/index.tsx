@@ -4,63 +4,73 @@ import path from "path";
 import { renderToStringAsync } from "preact-render-to-string";
 import { h } from "preact";
 import { build } from "esbuild";
-import { useEffect } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
+import { Suspense, lazy } from 'preact/compat';
 
 /** @jsx h */
 
 const apiRoutes = new Map<string, any>();
+const fetchCache = new Map<string, any>();
 
-export var fetch = globalThis.fetch;
-
-export var useServer = async (fn: Function, deps: any) => {
-  console.log('hi2u')
-
-  // server side: wrap fetch
-  if (typeof process === "object") {
-    console.log('hey babe')
-
-    fetch = async (url: string | any, opts?: any) => {
-      console.log('fetching', url)
-
-      if (!url.startsWith("/api/")) {
-        throw new Error(`Route ${url} is not an /api/ route`);
-      }
-
-      const handler = apiRoutes.get(url);
-
-      if (!handler) {
-        throw new Error(`No route for ${url}`);
-      }
-
-      let body: any;
-      const mockReq = { method: opts?.method || "GET", url } as Request;
-
-      const mockRes = {
-        json(data: any) { body = JSON.stringify(data); return mockRes; },
-        send(data: any) { body = data; return mockRes; },
-        status() { return mockRes; },
-      }
-
-      await handler(mockReq, mockRes);
-
-      console.log('fetched', url)
-      console.log(mockRes, body)
-
-      return {
-        ok: true,
-        json: async () => JSON.parse(body),
-        text: async () => body,
-      } as any;
+export function useFetchState(url: string) {
+  if (typeof window === "undefined") {
+    if (fetchCache.has(url)) {
+      return useState(fetchCache.get(url));
     }
 
-    await fn()
-  } else {
-    useEffect(() => {
-      fn();
-    }, deps);
-  }
-}
+    console.log('fetching', url)
 
+    if (!url.startsWith("/api/")) {
+      throw new Error(`Route ${url} is not an /api/ route`);
+    }
+
+    const handler = apiRoutes.get(url);
+
+    if (!handler) {
+      throw new Error(`No route for ${url}`);
+    }
+
+    let body: any;
+    const mockReq = { method: "GET", url } as Request;
+
+    const mockRes = {
+      json(data: any) { body = JSON.stringify(data); return mockRes; },
+      send(data: any) { body = data; return mockRes; },
+      status() { return mockRes; },
+    }
+
+    console.log('throwing...')
+    const f = async function () {
+      // await handler(mockReq, mockRes)
+      console.log('hi2u')
+
+      const value = JSON.stringify({ message: 'pong' })
+
+      return [value, () => { }] as const;
+    }
+
+    const promise = f()
+    fetchCache.set(url, promise)
+    throw promise
+  }
+
+  const response = useState("");
+  const [value, setValue] = response;
+
+  async function load() {
+    const response = await fetch(url);
+    const data = await response.json();
+    const key = Object.keys(data)[0];
+
+    setValue(data[key]);
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  return response;
+}
 
 /**
  * createApp()
@@ -128,12 +138,19 @@ export async function createApp() {
     const route = file === "index.tsx" ? "/" : "/" + file.replace(/\.(t|j)sx?$/, "");
     console.log(`🔗 ${route} -> ${path.join(routesDir, file)}`);
 
-    const mod = await import(path.join(routesDir, file));
-    const Component = mod.default;
+    // const mod = await import(path.join(routesDir, file));
+    // const Component = mod.default;
 
     app.get(route, async (req, res, next) => {
-      // try {
-      const html = await renderToStringAsync(<div><Component /></div>);
+      const Page = lazy(() => import(path.join(routesDir, file)));
+
+      // const Page = lazy(async () => {
+      //         // haha
+
+      //         return { default: <Component /> }
+      //       })
+
+      const html = await renderToStringAsync(<Suspense fallback={<p>Loading</p>}><Page /></Suspense>);
       res.send(htmlWrapper(html));
       // } catch (err) {
       //   next(err);
