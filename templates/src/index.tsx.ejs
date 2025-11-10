@@ -1,6 +1,6 @@
 import { h } from "preact";
 import { useState, useEffect } from "preact/hooks";
-import { useFetchState } from "preact-kit";
+import { useFetchState } from "preact-kit/hooks";
 
 export default function Home() {
   const [message, setMessage] = useFetchState("/api/ping")

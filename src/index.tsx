@@ -4,90 +4,11 @@ import path from "path";
 import { renderToStringAsync } from "preact-render-to-string";
 import { h } from "preact";
 import { build } from "esbuild";
-import { useEffect, useState } from "preact/hooks";
 import { Suspense, lazy } from 'preact/compat';
-import QuickLRU from "quick-lru";
+import { addRoute } from "./hooks";
 
 /** @jsx h */
 
-const apiRoutes = new Map<string, any>();
-const inflight = new Map<string, Promise<any>>();
-// const fetchCache = new Map<string, any>();
-const fetchCache = new QuickLRU({ maxSize: 32768, maxAge: 1000 });
-
-export function useFetchState(url: string) {
-  console.log('useFetchState called with url:', url)
-
-  if (typeof window === "undefined") {
-    if (inflight.has(url)) {
-      throw inflight.get(url);
-    }
-
-    if (fetchCache.has(url)) {
-      return useState(fetchCache.get(url));
-    }
-
-    console.log('fetching', url)
-
-    if (!url.startsWith("/api/")) {
-      throw new Error(`Route ${url} is not an /api/ route`);
-    }
-
-    const handler = apiRoutes.get(url);
-
-    if (!handler) {
-      throw new Error(`No route for ${url}`);
-    }
-
-
-    console.log('throwing...')
-    const f = async function () {
-      let body: any;
-      const mockReq = { method: "GET", url } as Request;
-
-      const mockRes = {
-        json(data: any) { body = data; return mockRes; },
-        send(data: any) { body = data; return mockRes; },
-        status() { return mockRes; },
-      }
-
-      console.log('querying..')
-
-      // await new Promise(resolve => setTimeout(resolve, 5)); // force async
-      await handler(mockReq, mockRes)
-      const key = Object.keys(body)[0];
-      const value = body[key]
-
-      console.log('..got response')
-
-      inflight.delete(url)
-      fetchCache.set(url, value)
-
-      return useState(value)
-    }
-
-    const promise = f()
-    inflight.set(url, promise)
-    throw promise;
-  }
-
-  const response = useState("");
-  const [value, setValue] = response;
-
-  async function load() {
-    const response = await fetch(url);
-    const data = await response.json();
-    const key = Object.keys(data)[0];
-
-    setValue(data[key]);
-  }
-
-  useEffect(() => {
-    load();
-  }, []);
-
-  return response;
-}
 
 /**
  * createApp()
@@ -120,31 +41,28 @@ export async function createApp() {
     jsx: "automatic",
     jsxImportSource: "preact",
     target: "es2020",
-    external: ["preact-kit"],
     loader: { ".tsx": "tsx", ".ts": "ts" },
+    preserveSymlinks: true,
   }).then(() => console.log("🧱 esbuild watching client bundle..."));
 
   // 3️⃣ Mount API routes
   console.log("Mounting API routes...");
 
-  if (fs.existsSync(apiDir)) {
-    for (const file of fs.readdirSync(apiDir)) {
-      if (!/\.(t|j)sx?$/.test(file)) {
-        continue;
-      }
-
-      const route = "/" + file.replace(/\.(t|j)sx?$/, "");
-      import(path.join(apiDir, file)).then((mod) => {
-        const handler = mod.default || mod.handler;
-        if (typeof handler === "function") {
-          console.log(`🔗 /api${route} -> ${path.join(apiDir, file)}`);
-          app.use(`/api${route}`, handler);
-          apiRoutes.set(`/api${route}`, handler);
-        }
-      });
+  for (const file of fs.readdirSync(apiDir)) {
+    if (!/\.(t|j)sx?$/.test(file)) {
+      continue;
     }
-  }
 
+    const route = "/" + file.replace(/\.(t|j)sx?$/, "");
+    await import(path.join(apiDir, file)).then((mod) => {
+      const handler = mod.default || mod.handler;
+      if (typeof handler === "function") {
+        console.log(`🔗 /api${route} -> ${path.join(apiDir, file)}`);
+        app.use(`/api${route}`, handler);
+        addRoute(`/api${route}`, handler);
+      }
+    });
+  }
 
   // 4️⃣ SSR routes
   console.log("Mounting SSR routes...");

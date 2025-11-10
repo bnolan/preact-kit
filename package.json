@@ -6,7 +6,12 @@
   "bin": {
     "preact-kit": "./dist/bin/cli.js"
   },
+  "exports": {
+    ".": "./dist/src/index.js",
+    "./hooks": "./dist/src/hooks.js"
+  },
   "scripts": {
+    "build": "tsc",
     "test": "tsx test/test.ts"
   },
   "keywords": [],
