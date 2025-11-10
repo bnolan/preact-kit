@@ -1,6 +1,6 @@
 {
   "name": "preact-kit",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
   "main": "src/index.tsx",
   "bin": {
@@ -18,7 +18,8 @@
     "express": "^5.1.0",
     "pg-promise": "^12.2.0",
     "preact": "^10.27.2",
-    "preact-render-to-string": "^6.6.3"
+    "preact-render-to-string": "^6.6.3",
+    "quick-lru": "^7.3.0"
   },
   "devDependencies": {
     "@types/ejs": "^3.1.5",

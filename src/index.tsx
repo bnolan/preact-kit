@@ -6,12 +6,14 @@ import { h } from "preact";
 import { build } from "esbuild";
 import { useEffect, useState } from "preact/hooks";
 import { Suspense, lazy } from 'preact/compat';
+import QuickLRU from "quick-lru";
 
 /** @jsx h */
 
 const apiRoutes = new Map<string, any>();
 const inflight = new Map<string, Promise<any>>();
-const fetchCache = new Map<string, any>();
+// const fetchCache = new Map<string, any>();
+const fetchCache = new QuickLRU({ maxSize: 32768, maxAge: 1000 });
 
 export function useFetchState(url: string) {
   console.log('useFetchState called with url:', url)
