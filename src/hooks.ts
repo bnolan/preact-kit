@@ -40,7 +40,8 @@ export function useFetchState(url: string, defaultValue: any) {
         const f = async function () {
             let body: any;
 
-            const mockReq = { method: "GET", url } as Request;
+            const query = {} as Record<string, string>;
+            const mockReq = { method: "GET", url, query } as unknown as Request;
             const mockRes = {
                 json(data: any) { body = data; return mockRes; },
                 send(data: any) { body = data; return mockRes; },
