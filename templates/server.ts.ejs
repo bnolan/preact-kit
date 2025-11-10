@@ -1,7 +1,10 @@
-// import { createApp } from "preact-kit";
-import { createApp } from "../src/index.tsx"; // local dev path
+// Fix preact module aliasing issue
+import 'module-alias/register'
 
-async function main () {
+// Load preact kit
+import { createApp } from "preact-kit";
+
+async function main() {
   const app = await createApp();
 
   app.listen(process.env.PORT || 3000, () =>

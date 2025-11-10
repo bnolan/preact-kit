@@ -2,6 +2,9 @@
   "name": "<%= appName %>",
   "version": "0.0.1",
   "private": true,
+  "_moduleAliases": {
+    "preact": "node_modules/preact"
+  },
   "engines": {
     "node": ">=18 <23"
   },
@@ -12,8 +15,7 @@
   },
   "dependencies": {
     "preact-kit": "1.*",
-    "preact-router": "^4.1.2",
-    "preact": "^10.27.0",
-    "preact-render-to-string": "^6.6.3"
+    "module-alias": "^2.2.3",
+    "preact": "^10.27.0"
   }
 }
