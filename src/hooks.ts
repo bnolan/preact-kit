@@ -17,7 +17,7 @@ const inflight = new Map<string, Promise<any>>();
 // const fetchCache = new Map<string, any>();
 const fetchCache = new QuickLRU({ maxSize: 32768, maxAge: 1000 });
 
-export function useFetchState(url: string) {
+export function useFetchState(url: string, defaultValue: any) {
     if (typeof window === "undefined") {
         if (inflight.has(url)) {
             throw inflight.get(url);
@@ -63,7 +63,7 @@ export function useFetchState(url: string) {
         throw promise;
     }
 
-    const response = useState("");
+    const response = useState(defaultValue);
     const [value, setValue] = response;
 
     async function load() {

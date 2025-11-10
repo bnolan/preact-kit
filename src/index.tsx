@@ -13,7 +13,7 @@ import { fileURLToPath } from "url";
 
 export function generateClientEntry(routesDir: string) {
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
-  const templateFile = path.join(__dirname, "./client.ts.ejs");
+  const templateFile = path.join(__dirname, "../../src/client.ts.ejs");
   const files = fs
     .readdirSync(routesDir)
     .filter(f => /\.(t|j)sx?$/.test(f))
