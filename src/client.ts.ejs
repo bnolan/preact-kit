@@ -1,0 +1,27 @@
+<%- banner %>
+import { h, render } from "preact";
+import { Router } from "preact-router";
+
+<% files.forEach(function(f, i) { -%>
+import Page<%- i %> from "./<%- f %>";
+<% }) -%>
+
+const routes = [
+<% files.forEach(function(f, i) { 
+     const route = f === "index.tsx"
+       ? "/"
+       : "/" + f.replace(/\.(t|j)sx?$/, "");
+-%>
+  { path: "<%- route %>", component: Page<%- i %> },
+<% }) -%>
+];
+
+function App() {
+  return (
+    <Router>
+        {routes.map(({ component: C, path }) => <C path={path} />)}
+    </Router>
+  );
+}
+
+render(<App />, document.getElementById("app")!);

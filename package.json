@@ -1,11 +1,10 @@
 {
   "name": "preact-kit",
   "version": "1.1.1",
-  "type": "module",
-  "main": "src/index.tsx",
   "bin": {
     "preact-kit": "./dist/bin/cli.js"
   },
+  "main": "dist/src/index.js",
   "exports": {
     ".": "./dist/src/index.js",
     "./hooks": "./dist/src/hooks.js"
@@ -24,6 +23,7 @@
     "pg-promise": "^12.2.0",
     "preact": "^10.27.2",
     "preact-render-to-string": "^6.6.3",
+    "preact-router": "^4.1.2",
     "quick-lru": "^7.3.0"
   },
   "devDependencies": {
