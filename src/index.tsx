@@ -40,20 +40,21 @@ export function useFetchState(url: string) {
 
     console.log('throwing...')
     const f = async function () {
-      // let body: any;
-      // const mockReq = { method: "GET", url } as Request;
+      let body: any;
+      const mockReq = { method: "GET", url } as Request;
 
-      // const mockRes = {
-      //   json(data: any) { body = JSON.stringify(data); return mockRes; },
-      //   send(data: any) { body = data; return mockRes; },
-      //   status() { return mockRes; },
-      // }
+      const mockRes = {
+        json(data: any) { body = data; return mockRes; },
+        send(data: any) { body = data; return mockRes; },
+        status() { return mockRes; },
+      }
 
-      // await handler(mockReq, mockRes)
       console.log('querying..')
 
-      await new Promise(resolve => setTimeout(resolve, 5)); // force async
-      const value = 'pong';
+      // await new Promise(resolve => setTimeout(resolve, 5)); // force async
+      await handler(mockReq, mockRes)
+      const key = Object.keys(body)[0];
+      const value = body[key]
 
       console.log('..got response')
 
